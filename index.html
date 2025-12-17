@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Threat Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c101a;
+      --panel: #12192b;
+      --panel-strong: #172137;
+      --text: #e9edf5;
+      --muted: #9ca8bd;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #22d3ee;
+      --accent-strong: #0ea5e9;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f472b6;
+      --shadow: 0 10px 50px rgba(0, 0, 0, 0.45);
+      --radius: 16px;
+      --blur: 90px;
+    }
+
+    body[data-theme="light"] {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --panel-strong: #edf1f8;
+      --text: #0f172a;
+      --muted: #4b5563;
+      --border: rgba(15, 23, 42, 0.08);
+      --accent: #0ea5e9;
+      --accent-strong: #0284c7;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+      --blur: 70px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.07), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.08), transparent 30%),
+                  var(--bg);
+      color: var(--text);
+      transition: background 0.4s ease, color 0.4s ease;
+      padding: 32px clamp(16px, 5vw, 64px);
+    }
+
+    .glass {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+
+    .brand .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      display: grid;
+      place-items: center;
+      color: #0b1220;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(34, 211, 238, 0.3);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      font: inherit;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .mode-toggle:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 10px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: -0.5px;
+    }
+
+    .subhead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .panel-grid {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 24px clamp(12px, 4vw, 32px);
+      }
+    }
+
+    .drop-panel {
+      position: relative;
+      padding: clamp(22px, 3vw, 28px);
+      overflow: hidden;
+    }
+
+    .drop-panel::before {
+      content: "";
+      position: absolute;
+      inset: -20% -10%;
+      background: radial-gradient(circle at 20% 30%, rgba(34, 211, 238, 0.12), transparent 35%),
+                  radial-gradient(circle at 80% 30%, rgba(14, 165, 233, 0.1), transparent 32%);
+      filter: blur(var(--blur));
+      z-index: 0;
+    }
+
+    .drop-panel > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .dropzone {
+      border: 1.5px dashed var(--border);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+      border-radius: var(--radius);
+      padding: clamp(32px, 4vw, 40px);
+      text-align: center;
+      transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      box-shadow: 0 25px 50px rgba(34, 211, 238, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .drop-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(34, 211, 238, 0.09);
+      color: var(--accent);
+    }
+
+    .drop-title {
+      font-size: 18px;
+      margin: 0 0 6px;
+      font-weight: 600;
+    }
+
+    .muted {
+      color: var(--muted);
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .primary {
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #0b1220;
+      font-weight: 700;
+      box-shadow: 0 12px 30px rgba(14, 165, 233, 0.25);
+    }
+
+    .primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 36px rgba(14, 165, 233, 0.3);
+    }
+
+    .ghost {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+    }
+
+    .ghost:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.12);
+    }
+
+    .checks {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .checks strong {
+      color: var(--text);
+    }
+
+    .side-panel {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .mini-title {
+      margin: 0 0 6px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-strong);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .legend-item strong {
+      color: var(--text);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .result-card {
+      display: grid;
+      gap: 8px;
+      padding: 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--panel);
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .result-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(34, 211, 238, 0.2);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .file-name {
+      font-weight: 600;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+
+    .status.clean {
+      color: var(--success);
+      border-color: rgba(52, 211, 153, 0.25);
+    }
+
+    .status.caution {
+      color: var(--warning);
+      border-color: rgba(251, 191, 36, 0.25);
+    }
+
+    .status.warning {
+      color: var(--danger);
+      border-color: rgba(244, 114, 182, 0.35);
+    }
+
+    .finding-list {
+      display: grid;
+      gap: 6px;
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .meta .pill {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .helper {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 6px 0 0;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <header>
+    <div class="brand">
+      <div class="logo">PD</div>
+      <div>
+        <div>PDF Threat Checker</div>
+        <small style="color: var(--muted);">FastAPI heuristic scan — in-memory only</small>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="mode-toggle" id="modeToggle" aria-label="Toggle color mode">
+        <span id="modeIcon">🌙</span>
+        <span id="modeLabel">Dark</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">
+        <span class="pill"><span class="dot"></span>FastAPI scan</span>
+        <span>Safe by design</span>
+      </div>
+      <h1>Check PDFs for embedded malware signals before you open them.</h1>
+      <p class="subhead">Drop a PDF to inspect it with a FastAPI function (or local fallback) for risky features like JavaScript, auto-run actions, embedded media, and external launchers. Files are processed in-memory and not persisted.</p>
+    </section>
+
+    <section class="panel-grid">
+      <div class="drop-panel glass">
+        <div class="dropzone" id="dropzone">
+          <div class="drop-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+              <path d="M8 7h8M8 11h8M8 15h5"></path>
+            </svg>
+          </div>
+          <h3 class="drop-title">Drag & drop your PDF</h3>
+          <p class="muted">Scans run through a FastAPI endpoint (or local fallback) with lightweight heuristics for common exploit surfaces.</p>
+          <div class="actions">
+            <button class="primary" id="browseBtn">Choose PDF</button>
+            <button class="ghost" type="button" id="demoBtn">Try a demo scan</button>
+          </div>
+          <p class="helper">Supports multiple files. Prefer original PDFs; password-protected files may limit checks.</p>
+          <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
+        </div>
+        <div class="checks">
+          <div><strong>What we flag:</strong> embedded JavaScript, auto-open actions (AA/OpenAction), Launch commands, embedded files/media, external URIs.</div>
+          <div><strong>How it works:</strong> FastAPI serverless scan on your deploy; if unreachable, a browser fallback runs the same heuristics locally.</div>
+        </div>
+      </div>
+
+      <aside class="side-panel glass">
+        <div>
+          <p class="mini-title">Scan Legend</p>
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-dot" style="background: var(--success);"></span>
+              <span><strong>Clean</strong> — no risky patterns detected.</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: var(--warning);"></span>
+              <span><strong>Caution</strong> — medium-risk features (actions, embedded media).</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot" style="background: var(--danger);"></span>
+              <span><strong>Warning</strong> — high-risk triggers like JavaScript or Launch.</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p class="mini-title">Quick tips</p>
+          <div class="badge-row">
+            <span class="badge">Open only if you trust the sender</span>
+            <span class="badge">Disable PDF auto-open in browsers</span>
+            <span class="badge">Keep your viewer updated</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section>
+      <p class="mini-title">Scan results</p>
+      <div class="results" id="results">
+        <div class="result-card">
+          <div class="result-header">
+            <span class="file-name">No files scanned yet</span>
+            <span class="status caution">Idle</span>
+          </div>
+          <p class="muted">Drop a PDF to see a detailed breakdown here.</p>
+        </div>
+      </div>
+      <p class="footer-note">This is a heuristic client-side check; for critical documents, pair with a full AV/EDR scan.</p>
+    </section>
+  </main>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const browseBtn = document.getElementById('browseBtn');
+    const demoBtn = document.getElementById('demoBtn');
+    const results = document.getElementById('results');
+    const modeToggle = document.getElementById('modeToggle');
+    const modeIcon = document.getElementById('modeIcon');
+    const modeLabel = document.getElementById('modeLabel');
+
+    const heuristics = [
+      { key: 'javascript', pattern: /\\/JavaScript|\\/JS/i, message: 'Embedded JavaScript found', severity: 'high' },
+      { key: 'launch', pattern: /\\/Launch/i, message: 'Launch action detected', severity: 'high' },
+      { key: 'openAction', pattern: /\\/OpenAction|\\/AA\\b/i, message: 'Auto-run action on open', severity: 'medium' },
+      { key: 'embeddedFile', pattern: /\\/EmbeddedFile|\\/Filespec/i, message: 'Embedded file present', severity: 'medium' },
+      { key: 'richMedia', pattern: /\\/RichMedia|\\/MediaClip/i, message: 'Rich media stream detected', severity: 'medium' },
+      { key: 'uri', pattern: /\\/URI|http:\\/\\/|https:\\/\\//i, message: 'External links present', severity: 'info' }
+    ];
+
+    const severityOrder = { clean: 0, info: 1, caution: 2, warning: 3, high: 3, medium: 2 };
+    const apiEndpoint = '/api/scan';
+
+    function setTheme(mode) {
+      document.body.setAttribute('data-theme', mode);
+      const dark = mode === 'dark';
+      modeIcon.textContent = dark ? '🌙' : '☀️';
+      modeLabel.textContent = dark ? 'Dark' : 'Light';
+      localStorage.setItem('pdf-theme', mode);
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem('pdf-theme');
+      if (saved === 'light' || saved === 'dark') {
+        setTheme(saved);
+        return;
+      }
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      setTheme(prefersLight ? 'light' : 'dark');
+    }
+
+    function renderResult(result) {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+
+      const header = document.createElement('div');
+      header.className = 'result-header';
+      header.innerHTML = `
+        <span class="file-name">${result.name}</span>
+        <span class="status ${result.status}">${result.statusLabel}</span>
+      `;
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML = `
+        <span class="pill">Size: ${result.size}</span>
+        <span class="pill">Checks: ${result.checks}</span>
+        <span class="pill">Time: ${result.time} ms</span>
+        <span class="pill">PDF header: ${result.pdfHeaderValid === false ? 'Missing' : 'Present'}</span>
+      `;
+
+      const findings = document.createElement('ul');
+      findings.className = 'finding-list';
+
+      if (!result.findings.length) {
+        findings.innerHTML = '<li>No risky patterns detected.</li>';
+      } else {
+        result.findings.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.message} (${item.severity})`;
+          findings.appendChild(li);
+        });
+      }
+
+      card.append(header, meta, findings);
+      results.prepend(card);
+    }
+
+    function humanSize(bytes) {
+      if (bytes === 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i];
+    }
+
+    async function analyzePdfFallback(file) {
+      const started = performance.now();
+      const buffer = await file.arrayBuffer();
+      const text = new TextDecoder('latin1').decode(new Uint8Array(buffer));
+      const findings = heuristics
+        .filter(rule => rule.pattern.test(text))
+        .map(rule => ({ message: rule.message, severity: rule.severity }));
+
+      const hasHigh = findings.some(f => f.severity === 'high');
+      const hasMedium = findings.some(f => f.severity === 'medium');
+
+      let status = 'clean';
+      if (hasHigh) status = 'warning';
+      else if (hasMedium) status = 'caution';
+
+      const statusLabel = status === 'clean' ? 'Clean' : status === 'caution' ? 'Caution' : 'Warning';
+
+      return {
+        name: file.name || 'untitled.pdf',
+        size: humanSize(file.size),
+        checks: heuristics.length,
+        findings,
+        status,
+        statusLabel,
+        time: Math.max(1, Math.round(performance.now() - started)),
+        pdfHeaderValid: text.startsWith('%PDF')
+      };
+    }
+
+    async function scanViaApi(file) {
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+
+      const response = await fetch(apiEndpoint, { method: 'POST', body: formData });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`API scan failed: ${response.status} ${errText}`);
+      }
+      const data = await response.json();
+
+      return {
+        name: data.name || file.name || 'upload.pdf',
+        size: data.size_human || humanSize(file.size),
+        checks: data.checks ?? heuristics.length,
+        findings: data.findings || [],
+        status: data.status || 'clean',
+        statusLabel: data.status_label || (data.status === 'caution' ? 'Caution' : data.status === 'warning' ? 'Warning' : 'Clean'),
+        time: data.time_ms ?? Math.max(1, Math.round(data.time || 0)),
+        pdfHeaderValid: data.pdf_header_valid !== undefined ? data.pdf_header_valid : true
+      };
+    }
+
+    function showIdleCard() {
+      results.innerHTML = `
+        <div class="result-card">
+          <div class="result-header">
+            <span class="file-name">No files scanned yet</span>
+            <span class="status caution">Idle</span>
+          </div>
+          <p class="muted">Drop a PDF to see a detailed breakdown here.</p>
+        </div>
+      `;
+    }
+
+    async function handleFiles(fileList) {
+      const pdfs = Array.from(fileList).filter(file =>
+        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      );
+
+      if (!pdfs.length) {
+        results.innerHTML = '<div class="result-card"><div class="result-header"><span class="file-name">Unsupported files</span><span class="status warning">Error</span></div><p class="muted">Please drop PDF files only.</p></div>';
+        return;
+      }
+
+      results.innerHTML = '';
+
+      for (const file of pdfs) {
+        const scanningCard = document.createElement('div');
+        scanningCard.className = 'result-card';
+        scanningCard.innerHTML = `
+          <div class="result-header">
+            <span class="file-name">${file.name}</span>
+            <span class="status caution">Scanning…</span>
+          </div>
+          <p class="muted">Running heuristic checks…</p>
+        `;
+        results.prepend(scanningCard);
+
+        try {
+          let result;
+          try {
+            result = await scanViaApi(file);
+          } catch (apiError) {
+            console.warn('API scan failed, falling back to local scan', apiError);
+            result = await analyzePdfFallback(file);
+            result.statusLabel += ' (local fallback)';
+          }
+          scanningCard.remove();
+          renderResult(result);
+        } catch (err) {
+          scanningCard.remove();
+          const errorCard = document.createElement('div');
+          errorCard.className = 'result-card';
+          errorCard.innerHTML = `
+            <div class="result-header">
+              <span class="file-name">${file.name}</span>
+              <span class="status warning">Failed</span>
+            </div>
+            <p class="muted">Could not read this file. It may be encrypted or corrupted.</p>
+          `;
+          results.prepend(errorCard);
+          console.error(err);
+        }
+      }
+    }
+
+    dropzone.addEventListener('dragover', event => {
+      event.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.classList.remove('dragover');
+    });
+
+    dropzone.addEventListener('drop', event => {
+      event.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (event.dataTransfer?.files?.length) {
+        handleFiles(event.dataTransfer.files);
+      }
+    });
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+    demoBtn.addEventListener('click', () => {
+      const mock = new File([`%PDF-1.7\n/JavaScript /Launch /OpenAction`], 'demo-suspicious.pdf', { type: 'application/pdf' });
+      handleFiles([mock]);
+    });
+
+    modeToggle.addEventListener('click', () => {
+      const current = document.body.getAttribute('data-theme');
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    initTheme();
+    showIdleCard();
+  </script>
+</body>
+</html>
