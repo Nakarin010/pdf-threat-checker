@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Threat Checker</title>
+  <title>PDF & URL Threat Checker | VirusTotal Powered</title>
+  <meta name="description" content="Check PDFs and URLs for embedded malware using VirusTotal API and heuristic analysis.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,6 +21,7 @@
       --success: #34d399;
       --warning: #fbbf24;
       --danger: #f472b6;
+      --vt-blue: #394eff;
       --shadow: 0 10px 50px rgba(0, 0, 0, 0.45);
       --radius: 16px;
       --blur: 90px;
@@ -37,6 +39,7 @@
       --success: #16a34a;
       --warning: #d97706;
       --danger: #dc2626;
+      --vt-blue: #394eff;
       --shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
       --blur: 70px;
     }
@@ -158,6 +161,45 @@
       line-height: 1.6;
     }
 
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #0b1220;
+      border-color: transparent;
+      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.25);
+    }
+
+    .tab-btn:hover:not(.active) {
+      border-color: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     .panel-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -195,12 +237,15 @@
     }
 
     .dropzone {
+      display: block;
       border: 1.5px dashed var(--border);
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
       border-radius: var(--radius);
       padding: clamp(32px, 4vw, 40px);
       text-align: center;
       transition: border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+      position: relative;
     }
 
     .dropzone.dragover {
@@ -253,6 +298,12 @@
       box-shadow: 0 14px 36px rgba(14, 165, 233, 0.3);
     }
 
+    .primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .ghost {
       padding: 12px 16px;
       border-radius: 999px;
@@ -286,6 +337,12 @@
       box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.12);
     }
 
+    .pill.vt {
+      background: rgba(57, 78, 255, 0.1);
+      border-color: rgba(57, 78, 255, 0.3);
+      color: var(--vt-blue);
+    }
+
     .checks {
       display: grid;
       gap: 8px;
@@ -296,6 +353,39 @@
 
     .checks strong {
       color: var(--text);
+    }
+
+    /* URL Input Section */
+    .url-input-section {
+      padding: clamp(22px, 3vw, 28px);
+    }
+
+    .url-input-wrapper {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .url-input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-strong);
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .url-input::placeholder {
+      color: var(--muted);
+    }
+
+    .url-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.15);
     }
 
     .side-panel {
@@ -382,6 +472,7 @@
 
     .file-name {
       font-weight: 600;
+      word-break: break-all;
     }
 
     .status {
@@ -407,6 +498,55 @@
     .status.warning {
       color: var(--danger);
       border-color: rgba(244, 114, 182, 0.35);
+    }
+
+    /* VT Stats Display */
+    .vt-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(57, 78, 255, 0.05);
+      border: 1px solid rgba(57, 78, 255, 0.15);
+    }
+
+    .vt-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 13px;
+    }
+
+    .vt-stat-value {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .vt-stat-value.danger {
+      color: var(--danger);
+    }
+
+    .vt-stat-value.warning {
+      color: var(--warning);
+    }
+
+    .vt-stat-value.success {
+      color: var(--success);
+    }
+
+    .vt-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(57, 78, 255, 0.12);
+      color: var(--vt-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .finding-list {
@@ -444,18 +584,82 @@
       font-size: 13px;
       margin-top: 10px;
     }
+
+    .file-input {
+      position: absolute;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+      top: 0;
+      left: 0;
+    }
+
+    .scan-type-toggle {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .scan-type-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scan-type-btn.active {
+      background: var(--accent);
+      color: #0b1220;
+      border-color: transparent;
+    }
+
+    .scan-type-btn:hover:not(.active) {
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: currentColor;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .vt-link {
+      color: var(--vt-blue);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .vt-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body data-theme="dark">
   <header>
     <div class="brand">
-      <div class="logo">PD</div>
+      <div class="logo">TC</div>
       <div>
-        <div>PDF Threat Checker</div>
-        <small style="color: var(--muted);">FastAPI heuristic scan — in-memory only</small>
+        <div>Threat Checker</div>
+        <small style="color: var(--muted);">PDF & URL scanning — VirusTotal powered</small>
       </div>
     </div>
     <div class="top-actions">
+      <span class="vt-badge" id="vtStatus">⏳ Checking VT...</span>
       <button class="mode-toggle" id="modeToggle" aria-label="Toggle color mode">
         <span id="modeIcon">🌙</span>
         <span id="modeLabel">Dark</span>
@@ -466,64 +670,143 @@
   <main>
     <section class="hero">
       <div class="eyebrow">
-        <span class="pill"><span class="dot"></span>FastAPI scan</span>
-        <span>Safe by design</span>
+        <span class="pill"><span class="dot"></span>Threat Intelligence</span>
+        <span>VirusTotal + Heuristics</span>
       </div>
-      <h1>Check PDFs for embedded malware signals before you open them.</h1>
-      <p class="subhead">Drop a PDF to inspect it with a FastAPI function (or local fallback) for risky features like JavaScript, auto-run actions, embedded media, and external launchers. Files are processed in-memory and not persisted.</p>
+      <h1>Check PDFs & URLs for malware signals before you open them.</h1>
+      <p class="subhead">Scan PDFs with heuristic analysis and VirusTotal's threat intelligence. Check URLs against 70+ security vendors. All scans are performed securely via API.</p>
     </section>
 
-    <section class="panel-grid">
-      <div class="drop-panel glass">
-        <div class="dropzone" id="dropzone">
-          <div class="drop-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="3" width="16" height="18" rx="2"></rect>
-              <path d="M8 7h8M8 11h8M8 15h5"></path>
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="pdf">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+          <path d="M8 7h8M8 11h8M8 15h5"></path>
+        </svg>
+        PDF Scan
+      </button>
+      <button class="tab-btn" data-tab="url">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path>
+          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path>
+        </svg>
+        URL Scan
+      </button>
+    </div>
+
+    <!-- PDF Scan Tab -->
+    <section class="tab-content active" id="tab-pdf">
+      <section class="panel-grid">
+        <div class="drop-panel glass">
+          <div class="dropzone" id="dropzone">
+            <div class="drop-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+                <path d="M8 7h8M8 11h8M8 15h5"></path>
+              </svg>
+            </div>
+            <h3 class="drop-title">Drag & drop your PDF</h3>
+            <p class="muted">Scans run through heuristic analysis + optional VirusTotal threat intelligence.</p>
+            <div class="actions">
+              <label class="primary" id="browseBtn" for="fileInput" role="button" tabindex="0">Choose PDF</label>
+              <button class="ghost" type="button" id="demoBtn">Try a demo scan</button>
+            </div>
+            <p class="helper">Supports multiple files. Password-protected files may limit checks.</p>
+            <input type="file" id="fileInput" accept="application/pdf" multiple class="file-input" aria-label="Choose PDF">
+            <div class="scan-type-toggle">
+              <button class="scan-type-btn active" data-type="quick">⚡ Quick (Heuristics Only)</button>
+              <button class="scan-type-btn" data-type="full">🛡️ Full (+ VirusTotal)</button>
+            </div>
+          </div>
+          <div class="checks">
+            <div><strong>What we flag:</strong> embedded JavaScript, auto-open actions (AA/OpenAction), Launch commands, embedded files/media, external URIs.</div>
+            <div><strong>Full scan:</strong> Adds VirusTotal's 70+ security vendor analysis for comprehensive threat detection.</div>
+          </div>
+        </div>
+
+        <aside class="side-panel glass">
+          <div>
+            <p class="mini-title">Scan Legend</p>
+            <div class="legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--success);"></span>
+                <span><strong>Clean</strong> — no risky patterns detected.</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--warning);"></span>
+                <span><strong>Caution</strong> — medium-risk features found.</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--danger);"></span>
+                <span><strong>Warning</strong> — high-risk triggers detected.</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="mini-title">Quick tips</p>
+            <div class="badge-row">
+              <span class="badge">Open only if you trust the sender</span>
+              <span class="badge">Disable PDF auto-open in browsers</span>
+              <span class="badge">Keep your viewer updated</span>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </section>
+
+    <!-- URL Scan Tab -->
+    <section class="tab-content" id="tab-url">
+      <section class="panel-grid">
+        <div class="url-input-section glass">
+          <div class="drop-icon" style="margin-bottom: 16px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path>
             </svg>
           </div>
-          <h3 class="drop-title">Drag & drop your PDF</h3>
-          <p class="muted">Scans run through a FastAPI endpoint (or local fallback) with lightweight heuristics for common exploit surfaces.</p>
-          <div class="actions">
-            <button class="primary" id="browseBtn">Choose PDF</button>
-            <button class="ghost" type="button" id="demoBtn">Try a demo scan</button>
+          <h3 class="drop-title">Check URL reputation</h3>
+          <p class="muted">Scan any URL against VirusTotal's 70+ security vendors to detect phishing, malware, and other threats.</p>
+          
+          <div class="url-input-wrapper">
+            <input type="url" class="url-input" id="urlInput" placeholder="https://example.com" autocomplete="url">
+            <button class="primary" id="urlScanBtn">Scan URL</button>
           </div>
-          <p class="helper">Supports multiple files. Prefer original PDFs; password-protected files may limit checks.</p>
-          <input type="file" id="fileInput" accept="application/pdf" multiple hidden>
+          
+          <div class="checks">
+            <div><strong>What we detect:</strong> phishing sites, malware distribution, C&C servers, suspicious redirects, malicious scripts.</div>
+            <div><strong>Powered by:</strong> VirusTotal's database of 70+ security vendors including Google Safe Browsing, Fortinet, Kaspersky, and more.</div>
+          </div>
         </div>
-        <div class="checks">
-          <div><strong>What we flag:</strong> embedded JavaScript, auto-open actions (AA/OpenAction), Launch commands, embedded files/media, external URIs.</div>
-          <div><strong>How it works:</strong> FastAPI serverless scan on your deploy; if unreachable, a browser fallback runs the same heuristics locally.</div>
-        </div>
-      </div>
 
-      <aside class="side-panel glass">
-        <div>
-          <p class="mini-title">Scan Legend</p>
-          <div class="legend">
-            <div class="legend-item">
-              <span class="legend-dot" style="background: var(--success);"></span>
-              <span><strong>Clean</strong> — no risky patterns detected.</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot" style="background: var(--warning);"></span>
-              <span><strong>Caution</strong> — medium-risk features (actions, embedded media).</span>
-            </div>
-            <div class="legend-item">
-              <span class="legend-dot" style="background: var(--danger);"></span>
-              <span><strong>Warning</strong> — high-risk triggers like JavaScript or Launch.</span>
+        <aside class="side-panel glass">
+          <div>
+            <p class="mini-title">URL Safety Tips</p>
+            <div class="legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--success);"></span>
+                <span><strong>Safe</strong> — no vendors flagged this URL.</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--warning);"></span>
+                <span><strong>Suspicious</strong> — some vendors raised concerns.</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background: var(--danger);"></span>
+                <span><strong>Malicious</strong> — vendors detected threats.</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div>
-          <p class="mini-title">Quick tips</p>
-          <div class="badge-row">
-            <span class="badge">Open only if you trust the sender</span>
-            <span class="badge">Disable PDF auto-open in browsers</span>
-            <span class="badge">Keep your viewer updated</span>
+          <div>
+            <p class="mini-title">Before clicking links</p>
+            <div class="badge-row">
+              <span class="badge">Hover to preview URLs</span>
+              <span class="badge">Check for typosquatting</span>
+              <span class="badge">Verify HTTPS</span>
+            </div>
           </div>
-        </div>
-      </aside>
+        </aside>
+      </section>
     </section>
 
     <section>
@@ -531,48 +814,71 @@
       <div class="results" id="results">
         <div class="result-card">
           <div class="result-header">
-            <span class="file-name">No files scanned yet</span>
+            <span class="file-name">No scans yet</span>
             <span class="status caution">Idle</span>
           </div>
-          <p class="muted">Drop a PDF to see a detailed breakdown here.</p>
+          <p class="muted">Drop a PDF or enter a URL above to see threat analysis results.</p>
         </div>
       </div>
-      <p class="footer-note">This is a heuristic client-side check; for critical documents, pair with a full AV/EDR scan.</p>
+      <p class="footer-note">For critical documents or URLs, verify with multiple sources. VirusTotal rate limits: 4 requests/minute on free tier.</p>
     </section>
   </main>
 
   <script>
     const dropzone = document.getElementById('dropzone');
     const fileInput = document.getElementById('fileInput');
-    const browseBtn = document.getElementById('browseBtn');
     const demoBtn = document.getElementById('demoBtn');
     const results = document.getElementById('results');
     const modeToggle = document.getElementById('modeToggle');
     const modeIcon = document.getElementById('modeIcon');
     const modeLabel = document.getElementById('modeLabel');
+    const urlInput = document.getElementById('urlInput');
+    const urlScanBtn = document.getElementById('urlScanBtn');
+    const vtStatus = document.getElementById('vtStatus');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const scanTypeBtns = document.querySelectorAll('.scan-type-btn');
+
+    let scanType = 'quick'; // 'quick' or 'full'
+    let vtConfigured = false;
 
     const heuristics = [
-      { key: 'javascript', pattern: /\\/JavaScript|\\/JS/i, message: 'Embedded JavaScript found', severity: 'high' },
-      { key: 'launch', pattern: /\\/Launch/i, message: 'Launch action detected', severity: 'high' },
-      { key: 'openAction', pattern: /\\/OpenAction|\\/AA\\b/i, message: 'Auto-run action on open', severity: 'medium' },
-      { key: 'embeddedFile', pattern: /\\/EmbeddedFile|\\/Filespec/i, message: 'Embedded file present', severity: 'medium' },
-      { key: 'richMedia', pattern: /\\/RichMedia|\\/MediaClip/i, message: 'Rich media stream detected', severity: 'medium' },
-      { key: 'uri', pattern: /\\/URI|http:\\/\\/|https:\\/\\//i, message: 'External links present', severity: 'info' }
+      { key: 'javascript', pattern: /\/JavaScript|\/JS/i, message: 'Embedded JavaScript found', severity: 'high' },
+      { key: 'launch', pattern: /\/Launch/i, message: 'Launch action detected', severity: 'high' },
+      { key: 'openAction', pattern: /\/OpenAction|\/AA\b/i, message: 'Auto-run action on open', severity: 'medium' },
+      { key: 'embeddedFile', pattern: /\/EmbeddedFile|\/Filespec/i, message: 'Embedded file present', severity: 'medium' },
+      { key: 'richMedia', pattern: /\/RichMedia|\/MediaClip/i, message: 'Rich media stream detected', severity: 'medium' },
+      { key: 'uri', pattern: /\/URI|http:\/\/|https:\/\//i, message: 'External links present', severity: 'info' }
     ];
 
-    const severityOrder = { clean: 0, info: 1, caution: 2, warning: 3, high: 3, medium: 2 };
-    const apiEndpoint = '/api/scan';
+    function computeApiBase() {
+      const { origin, protocol, hostname } = window.location;
+      if (protocol === 'file:') return 'http://127.0.0.1:8081';
+      if (hostname === 'localhost' || hostname === '127.0.0.1') return origin.replace(/\/$/, '');
+      return '';
+    }
+
+    const apiBase = computeApiBase();
+    const apiEndpoint = `${apiBase}/api/scan`;
+    const apiVtEndpoint = `${apiBase}/api/scan-vt`;
+    const apiUrlScanEndpoint = `${apiBase}/api/url-scan`;
+    const healthEndpoint = `${apiBase}/api/health`;
+    let apiAvailable = true;
 
     function setTheme(mode) {
       document.body.setAttribute('data-theme', mode);
       const dark = mode === 'dark';
       modeIcon.textContent = dark ? '🌙' : '☀️';
       modeLabel.textContent = dark ? 'Dark' : 'Light';
-      localStorage.setItem('pdf-theme', mode);
+      try {
+        localStorage.setItem('pdf-theme', mode);
+      } catch (e) {}
     }
 
     function initTheme() {
-      const saved = localStorage.getItem('pdf-theme');
+      let saved = null;
+      try {
+        saved = localStorage.getItem('pdf-theme');
+      } catch (e) {}
       if (saved === 'light' || saved === 'dark') {
         setTheme(saved);
         return;
@@ -581,48 +887,110 @@
       setTheme(prefersLight ? 'light' : 'dark');
     }
 
-    function renderResult(result) {
-      const card = document.createElement('div');
-      card.className = 'result-card';
-
-      const header = document.createElement('div');
-      header.className = 'result-header';
-      header.innerHTML = `
-        <span class="file-name">${result.name}</span>
-        <span class="status ${result.status}">${result.statusLabel}</span>
-      `;
-
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.innerHTML = `
-        <span class="pill">Size: ${result.size}</span>
-        <span class="pill">Checks: ${result.checks}</span>
-        <span class="pill">Time: ${result.time} ms</span>
-        <span class="pill">PDF header: ${result.pdfHeaderValid === false ? 'Missing' : 'Present'}</span>
-      `;
-
-      const findings = document.createElement('ul');
-      findings.className = 'finding-list';
-
-      if (!result.findings.length) {
-        findings.innerHTML = '<li>No risky patterns detected.</li>';
-      } else {
-        result.findings.forEach(item => {
-          const li = document.createElement('li');
-          li.textContent = `${item.message} (${item.severity})`;
-          findings.appendChild(li);
-        });
-      }
-
-      card.append(header, meta, findings);
-      results.prepend(card);
-    }
-
     function humanSize(bytes) {
       if (bytes === 0) return '0 B';
       const units = ['B', 'KB', 'MB', 'GB'];
       const i = Math.floor(Math.log(bytes) / Math.log(1024));
       return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i];
+    }
+
+    function renderVtStats(stats) {
+      if (!stats) return '';
+      return `
+        <div class="vt-stats">
+          <div class="vt-stat">
+            <span class="vt-stat-value ${stats.malicious > 0 ? 'danger' : ''}">${stats.malicious}</span>
+            <span>Malicious</span>
+          </div>
+          <div class="vt-stat">
+            <span class="vt-stat-value ${stats.suspicious > 0 ? 'warning' : ''}">${stats.suspicious}</span>
+            <span>Suspicious</span>
+          </div>
+          <div class="vt-stat">
+            <span class="vt-stat-value success">${stats.harmless}</span>
+            <span>Harmless</span>
+          </div>
+          <div class="vt-stat">
+            <span class="vt-stat-value">${stats.undetected}</span>
+            <span>Undetected</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPdfResult(result) {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+
+      const overallStatus = result.vt_status || result.heuristic_status || result.status;
+      const statusLabel = overallStatus === 'clean' ? 'Clean' : overallStatus === 'caution' ? 'Caution' : 'Warning';
+
+      let vtSection = '';
+      if (result.vt_stats) {
+        vtSection = `
+          <div style="margin-top: 8px;">
+            <span class="vt-badge">VirusTotal Results</span>
+            ${renderVtStats(result.vt_stats)}
+            ${result.vt_permalink ? `<a href="${result.vt_permalink}" target="_blank" class="vt-link">View full report →</a>` : ''}
+          </div>
+        `;
+      }
+
+      const findings = result.heuristic_findings || result.findings || [];
+      let findingsHtml = '';
+      if (findings.length > 0) {
+        findingsHtml = `
+          <ul class="finding-list">
+            ${findings.map(f => `<li>${f.message} (${f.severity})</li>`).join('')}
+          </ul>
+        `;
+      } else {
+        findingsHtml = '<ul class="finding-list"><li>No risky patterns detected by heuristics.</li></ul>';
+      }
+
+      card.innerHTML = `
+        <div class="result-header">
+          <span class="file-name">${result.name}</span>
+          <span class="status ${overallStatus}">${statusLabel}</span>
+        </div>
+        <div class="meta">
+          <span class="pill">Size: ${result.size_human || humanSize(result.size_bytes)}</span>
+          <span class="pill">Time: ${result.time_ms} ms</span>
+          <span class="pill">PDF header: ${result.pdf_header_valid ? 'Valid' : 'Missing'}</span>
+          ${result.sha256 ? `<span class="pill">SHA256: ${result.sha256.slice(0, 12)}...</span>` : ''}
+        </div>
+        <div><strong style="font-size: 13px;">Heuristic Analysis:</strong></div>
+        ${findingsHtml}
+        ${vtSection}
+      `;
+      results.prepend(card);
+    }
+
+    function renderUrlResult(result) {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+
+      const status = result.vt_status || 'clean';
+      const statusLabel = status === 'clean' ? 'Safe' : status === 'caution' ? 'Suspicious' : 'Malicious';
+
+      card.innerHTML = `
+        <div class="result-header">
+          <span class="file-name">${result.url}</span>
+          <span class="status ${status}">${statusLabel}</span>
+        </div>
+        <div class="meta">
+          <span class="pill">Time: ${result.time_ms} ms</span>
+          ${result.categories ? `<span class="pill">Categories: ${Object.values(result.categories).slice(0, 3).join(', ')}</span>` : ''}
+        </div>
+        ${result.vt_stats ? `
+          <div style="margin-top: 8px;">
+            <span class="vt-badge">VirusTotal Results</span>
+            ${renderVtStats(result.vt_stats)}
+            ${result.vt_permalink ? `<a href="${result.vt_permalink}" target="_blank" class="vt-link">View full report →</a>` : ''}
+          </div>
+        ` : '<p class="muted">Unable to get VirusTotal results. Check API configuration.</p>'}
+      `;
+      results.prepend(card);
     }
 
     async function analyzePdfFallback(file) {
@@ -640,106 +1008,189 @@
       if (hasHigh) status = 'warning';
       else if (hasMedium) status = 'caution';
 
-      const statusLabel = status === 'clean' ? 'Clean' : status === 'caution' ? 'Caution' : 'Warning';
-
       return {
         name: file.name || 'untitled.pdf',
-        size: humanSize(file.size),
-        checks: heuristics.length,
+        size_human: humanSize(file.size),
+        size_bytes: file.size,
         findings,
         status,
-        statusLabel,
-        time: Math.max(1, Math.round(performance.now() - started)),
-        pdfHeaderValid: text.startsWith('%PDF')
+        time_ms: Math.max(1, Math.round(performance.now() - started)),
+        pdf_header_valid: text.startsWith('%PDF')
       };
     }
 
-    async function scanViaApi(file) {
+    async function scanViaApi(file, useVt = false) {
       const formData = new FormData();
       formData.append('file', file, file.name);
 
-      const response = await fetch(apiEndpoint, { method: 'POST', body: formData });
+      const endpoint = useVt ? apiVtEndpoint : apiEndpoint;
+      const response = await fetch(endpoint, { method: 'POST', body: formData });
       if (!response.ok) {
         const errText = await response.text();
         throw new Error(`API scan failed: ${response.status} ${errText}`);
       }
-      const data = await response.json();
+      return await response.json();
+    }
 
-      return {
-        name: data.name || file.name || 'upload.pdf',
-        size: data.size_human || humanSize(file.size),
-        checks: data.checks ?? heuristics.length,
-        findings: data.findings || [],
-        status: data.status || 'clean',
-        statusLabel: data.status_label || (data.status === 'caution' ? 'Caution' : data.status === 'warning' ? 'Warning' : 'Clean'),
-        time: data.time_ms ?? Math.max(1, Math.round(data.time || 0)),
-        pdfHeaderValid: data.pdf_header_valid !== undefined ? data.pdf_header_valid : true
-      };
+    async function scanUrl(url) {
+      const formData = new FormData();
+      formData.append('url', url);
+
+      const response = await fetch(apiUrlScanEndpoint, { method: 'POST', body: formData });
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`URL scan failed: ${response.status} ${errText}`);
+      }
+      return await response.json();
     }
 
     function showIdleCard() {
       results.innerHTML = `
         <div class="result-card">
           <div class="result-header">
-            <span class="file-name">No files scanned yet</span>
+            <span class="file-name">No scans yet</span>
             <span class="status caution">Idle</span>
           </div>
-          <p class="muted">Drop a PDF to see a detailed breakdown here.</p>
+          <p class="muted">Drop a PDF or enter a URL above to see threat analysis results.</p>
         </div>
       `;
     }
 
     async function handleFiles(fileList) {
-      const pdfs = Array.from(fileList).filter(file =>
-        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-      );
+      try {
+        const pdfs = Array.from(fileList).filter(file =>
+          file.type === 'application/pdf' || (file.name && file.name.toLowerCase().endsWith('.pdf'))
+        );
 
-      if (!pdfs.length) {
-        results.innerHTML = '<div class="result-card"><div class="result-header"><span class="file-name">Unsupported files</span><span class="status warning">Error</span></div><p class="muted">Please drop PDF files only.</p></div>';
+        if (!pdfs.length) {
+          results.innerHTML = '<div class="result-card"><div class="result-header"><span class="file-name">Unsupported files</span><span class="status warning">Error</span></div><p class="muted">Please drop PDF files only.</p></div>';
+          return;
+        }
+
+        results.innerHTML = '';
+
+        for (const file of pdfs) {
+          const scanningCard = document.createElement('div');
+          scanningCard.className = 'result-card';
+          scanningCard.innerHTML = `
+            <div class="result-header">
+              <span class="file-name">${file.name}</span>
+              <span class="status caution"><span class="spinner"></span> Scanning…</span>
+            </div>
+            <p class="muted">${scanType === 'full' ? 'Running heuristics + VirusTotal analysis (may take 30+ seconds)…' : 'Running heuristic checks…'}</p>
+          `;
+          results.prepend(scanningCard);
+
+          try {
+            let result;
+            if (apiAvailable) {
+              try {
+                result = await scanViaApi(file, scanType === 'full');
+              } catch (apiError) {
+                console.warn('API scan failed, falling back to local scan', apiError);
+                result = await analyzePdfFallback(file);
+                result.name += ' (local fallback)';
+              }
+            } else {
+              result = await analyzePdfFallback(file);
+              result.name += ' (local fallback)';
+            }
+            if (scanningCard.parentNode) scanningCard.remove();
+            renderPdfResult(result);
+          } catch (err) {
+            if (scanningCard.parentNode) scanningCard.remove();
+            const errorCard = document.createElement('div');
+            errorCard.className = 'result-card';
+            errorCard.innerHTML = `
+              <div class="result-header">
+                <span class="file-name">${file.name}</span>
+                <span class="status warning">Failed</span>
+              </div>
+              <p class="muted">Could not read this file. It may be encrypted or corrupted.</p>
+            `;
+            results.prepend(errorCard);
+            console.error(err);
+          }
+        }
+        fileInput.value = '';
+      } catch (globalErr) {
+        console.error("Critical error in handleFiles:", globalErr);
+        results.innerHTML = `<div class="result-card"><div class="result-header"><span class="file-name">System Error</span><span class="status warning">Crash</span></div><p class="muted">An unexpected error occurred: ${globalErr.message}</p></div>`;
+      }
+    }
+
+    async function handleUrlScan() {
+      const url = urlInput.value.trim();
+      if (!url) {
+        alert('Please enter a URL to scan.');
         return;
       }
 
-      results.innerHTML = '';
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        alert('URL must start with http:// or https://');
+        return;
+      }
 
-      for (const file of pdfs) {
-        const scanningCard = document.createElement('div');
-        scanningCard.className = 'result-card';
-        scanningCard.innerHTML = `
+      const scanningCard = document.createElement('div');
+      scanningCard.className = 'result-card';
+      scanningCard.innerHTML = `
+        <div class="result-header">
+          <span class="file-name">${url}</span>
+          <span class="status caution"><span class="spinner"></span> Scanning URL…</span>
+        </div>
+        <p class="muted">Checking against VirusTotal's 70+ security vendors (may take 30+ seconds)…</p>
+      `;
+
+      // Clear idle card if present
+      if (results.querySelector('.file-name')?.textContent === 'No scans yet') {
+        results.innerHTML = '';
+      }
+      results.prepend(scanningCard);
+
+      try {
+        const result = await scanUrl(url);
+        if (scanningCard.parentNode) scanningCard.remove();
+        renderUrlResult(result);
+        urlInput.value = '';
+      } catch (err) {
+        if (scanningCard.parentNode) scanningCard.remove();
+        const errorCard = document.createElement('div');
+        errorCard.className = 'result-card';
+        errorCard.innerHTML = `
           <div class="result-header">
-            <span class="file-name">${file.name}</span>
-            <span class="status caution">Scanning…</span>
+            <span class="file-name">${url}</span>
+            <span class="status warning">Failed</span>
           </div>
-          <p class="muted">Running heuristic checks…</p>
+          <p class="muted">${err.message || 'Could not scan this URL. Check API configuration.'}</p>
         `;
-        results.prepend(scanningCard);
-
-        try {
-          let result;
-          try {
-            result = await scanViaApi(file);
-          } catch (apiError) {
-            console.warn('API scan failed, falling back to local scan', apiError);
-            result = await analyzePdfFallback(file);
-            result.statusLabel += ' (local fallback)';
-          }
-          scanningCard.remove();
-          renderResult(result);
-        } catch (err) {
-          scanningCard.remove();
-          const errorCard = document.createElement('div');
-          errorCard.className = 'result-card';
-          errorCard.innerHTML = `
-            <div class="result-header">
-              <span class="file-name">${file.name}</span>
-              <span class="status warning">Failed</span>
-            </div>
-            <p class="muted">Could not read this file. It may be encrypted or corrupted.</p>
-          `;
-          results.prepend(errorCard);
-          console.error(err);
-        }
+        results.prepend(errorCard);
+        console.error(err);
       }
     }
+
+    // Tab switching
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    // Scan type toggle
+    scanTypeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        scanTypeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        scanType = btn.dataset.type;
+      });
+    });
+
+    // Prevent browser from opening files when dropped outside the dropzone.
+    ['dragover', 'drop'].forEach(evt =>
+      window.addEventListener(evt, e => e.preventDefault(), false)
+    );
 
     dropzone.addEventListener('dragover', event => {
       event.preventDefault();
@@ -753,12 +1204,24 @@
     dropzone.addEventListener('drop', event => {
       event.preventDefault();
       dropzone.classList.remove('dragover');
-      if (event.dataTransfer?.files?.length) {
-        handleFiles(event.dataTransfer.files);
+      const files = event.dataTransfer && event.dataTransfer.files;
+      if (files && files.length) {
+        handleFiles(files);
       }
     });
 
-    browseBtn.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('click', event => {
+      if (event.target === fileInput || event.target.closest('label[for="fileInput"]')) return;
+      if (event.target && typeof event.target.closest === 'function' && event.target.closest('#demoBtn')) return;
+      if (event.target && typeof event.target.closest === 'function' && event.target.closest('.scan-type-btn')) return;
+      
+      if (typeof fileInput.showPicker === 'function') {
+        fileInput.showPicker();
+      } else {
+        fileInput.click();
+      }
+    });
+
     fileInput.addEventListener('change', e => handleFiles(e.target.files));
 
     demoBtn.addEventListener('click', () => {
@@ -771,8 +1234,41 @@
       setTheme(current === 'dark' ? 'light' : 'dark');
     });
 
+    urlScanBtn.addEventListener('click', handleUrlScan);
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleUrlScan();
+    });
+
+    async function checkApi() {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 1200);
+        const res = await fetch(healthEndpoint, { signal: controller.signal });
+        clearTimeout(timer);
+        if (res.ok) {
+          const data = await res.json();
+          apiAvailable = true;
+          vtConfigured = data.vt_configured;
+          vtStatus.textContent = vtConfigured ? '✓ VT Ready' : '⚠ VT Not Configured';
+          vtStatus.style.background = vtConfigured ? 'rgba(52, 211, 153, 0.15)' : 'rgba(251, 191, 36, 0.15)';
+          vtStatus.style.color = vtConfigured ? 'var(--success)' : 'var(--warning)';
+        } else {
+          apiAvailable = false;
+          vtStatus.textContent = '✗ API Offline';
+          vtStatus.style.background = 'rgba(244, 114, 182, 0.15)';
+          vtStatus.style.color = 'var(--danger)';
+        }
+      } catch (err) {
+        apiAvailable = false;
+        vtStatus.textContent = '✗ API Offline';
+        vtStatus.style.background = 'rgba(244, 114, 182, 0.15)';
+        vtStatus.style.color = 'var(--danger)';
+      }
+    }
+
     initTheme();
     showIdleCard();
+    checkApi();
   </script>
 </body>
 </html>
